@@ -175,6 +175,27 @@ get_ipv6() {
   echo $(${gia} ${LVPN_SUBNET6%/*})/128
 }
 
+# Obtiene la IPv4 de la ruta por defecto
+# route funciona en openwrt
+get_default_route_ipv4() {
+  type ip &>/dev/null && ip route | grep default | cut -d " " -f3 
+  type route &>/dev/null && route -n | grep UG | tr -s " " | cut -d " " -f2
+}
+
+# Obtiene la IPv4 local para la ruta por defecto
+# TODO encontrar una forma más simple?
+get_default_ipv4() {
+  type tracepath &>/dev/null && t=tracepath && h=1 && c=3
+  type traceroute &>/dev/null && t=traceroute && h=2 && c=3
+
+  ${t} -n $(get_default_route_ipv4) | \
+    head -n${h} | \
+    tr -s " " | \
+    cut -d " " -f ${c} | \
+# Sólo para traceroute porque el head+2 trae dos ips
+    tail -n 1
+}
+
 if $root ; then
 # Salir si no se es root y no existe sudo, sino usarlo
   if [ ! -w / ]; then
